@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1b5e20">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Plant Guide">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Plant Families of the World ID App</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-gradient-start: #e8f5e9;
+      --bg-gradient-end: #c8e6c9;
+      --text-primary: #1b5e20;
+      --text-secondary: #2e7d32;
+      --card-bg: white;
+      --input-bg: white;
+      --input-border: #ddd;
+      --shadow: rgba(0,0,0,0.1);
+    }
+    body.dark-mode {
+      --bg-gradient-start: #1a1a1a;
+      --bg-gradient-end: #0d3d0d;
+      --text-primary: #a5d6a7;
+      --text-secondary: #81c784;
+      --card-bg: #2a2a2a;
+      --input-bg: #1a1a1a;
+      --input-border: #4a4a4a;
+      --shadow: rgba(0,0,0,0.3);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+      padding: 10px;
+      min-height: 100vh;
+      color: var(--text-primary);
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .theme-toggle {
+      position: fixed; top: 10px; right: 10px; background: var(--card-bg);
+      border: 2px solid var(--text-secondary); border-radius: 50%;
+      width: 50px; height: 50px; cursor: pointer; font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px var(--shadow); z-index: 1000;
+    }
+    .upload-screen {
+      background: var(--card-bg); border-radius: 12px; padding: 20px;
+      margin-top: 60px; box-shadow: 0 2px 8px var(--shadow); text-align: center;
+    }
+    .upload-icon { font-size: 48px; margin-bottom: 15px; }
+    .upload-title { font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 10px; }
+    .upload-subtitle { color: var(--text-secondary); margin-bottom: 20px; font-size: 14px; }
+    .csv-textarea {
+      width: 100%; min-height: 200px; padding: 10px;
+      border: 2px solid var(--text-secondary); border-radius: 8px;
+      font-family: monospace; font-size: 12px; margin-bottom: 15px;
+      background: var(--input-bg); color: var(--text-primary);
+    }
+    .load-btn {
+      background: #4caf50; color: white; border: none; padding: 12px 24px;
+      border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
+      width: 100%; margin-bottom: 10px;
+    }
+    .save-btn {
+      background: #2196f3; color: white; border: none; padding: 10px 20px;
+      border-radius: 8px; font-size: 14px; cursor: pointer; width: 100%;
+    }
+    .tip-text { font-size: 12px; color: var(--text-secondary); margin-top: 10px; line-height: 1.4; }
+    h1 { color: var(--text-primary); font-size: 22px; margin-bottom: 2px; margin-top: 50px; }
+    .app-subtitle { color: var(--text-secondary); font-size: 12px; margin-bottom: 15px; font-style: italic; }
+    .top-buttons { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .reload-btn { background: #ff9800; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .help-btn { background: #2196f3; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .show-all-btn { background: #9c27b0; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .back-btn { background: #4caf50; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; margin-bottom: 15px; }
+    .search-panel { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px var(--shadow); }
+    .search-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    .search-header-left { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+    .search-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .search-status { font-size: 13px; color: var(--text-secondary); padding: 4px 10px; background: #e8f5e9; border-radius: 12px; }
+    body.dark-mode .search-status { background: #1b3d1b; }
+    .search-status.found { background: #c8e6c9; color: #2e7d32; font-weight: 600; }
+    body.dark-mode .search-status.found { background: #2e5a2e; color: #a5d6a7; }
+    .clear-btn { background: #ffebee; color: #c62828; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .search-grid { display: grid; gap: 12px; }
+    .search-box { display: flex; flex-direction: column; gap: 4px; }
+    .search-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; }
+    .add-search-btn { background: #4caf50; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center; }
+    .search-input-wrapper { position: relative; display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
+    .search-input, .search-select { width: 100%; padding: 8px 10px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 14px; background: var(--input-bg); color: var(--text-primary); }
+    .search-input { flex: 1; }
+    .search-select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232e7d32' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; margin-bottom: 4px; }
+    body.dark-mode .search-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2381c784' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); }
+    .search-input:focus, .search-select:focus { outline: none; border-color: #4caf50; }
+    .remove-search-btn { background: #f44336; color: white; border: none; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .file-upload-wrapper { margin-top: 15px; }
+    .file-upload-label { display: block; background: #ff9800; color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; text-align: center; }
+    .file-upload-input { display: none; }
+    .hidden { display: none !important; }
+    .active-filters { background: #fff3e0; padding: 8px 12px; border-radius: 6px; font-size: 12px; color: #e65100; margin-bottom: 10px; }
+    body.dark-mode .active-filters { background: #3d2600; color: #ffb74d; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+    .card { background: var(--card-bg); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px var(--shadow); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--shadow); }
+    .card-header { background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 12px 15px; }
+    body.dark-mode .card-header { background: linear-gradient(135deg, #2e7d32, #1b5e20); }
+    .card-title { display: flex; justify-content: space-between; align-items: flex-start; }
+    .family-name { font-size: 18px; font-weight: 700; }
+    .order-name { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+    .card-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .badge { font-size: 10px; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+    .badge-group { background: rgba(255,255,255,0.25); color: white; }
+    .badge-species { background: rgba(255,255,255,0.9); color: #2e7d32; }
+    .card-content { padding: 12px 15px; }
+    .detail-row { display: flex; margin-bottom: 8px; font-size: 13px; line-height: 1.4; }
+    .detail-label { font-weight: 600; color: var(--text-secondary); min-width: 80px; flex-shrink: 0; }
+    .detail-value { color: var(--text-primary); }
+    .expand-hint { text-align: center; padding: 8px; font-size: 11px; color: var(--text-secondary); border-top: 1px solid var(--input-border); }
+    .no-results, .start-searching { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+    .no-results-icon, .start-icon { font-size: 48px; margin-bottom: 15px; }
+    @media (max-width: 600px) { .cards-grid { grid-template-columns: 1fr; } .search-grid { grid-template-columns: 1fr; } h1 { font-size: 18px; } }
+    @media (min-width: 601px) { .search-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 900px) { .search-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 1200px) { .search-grid { grid-template-columns: repeat(4, 1fr); } }
+    .install-prompt { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #4caf50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001; display: none; gap: 10px; align-items: center; }
+    .install-prompt button { background: white; color: #4caf50; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+    .install-prompt .close-btn { background: transparent; color: white; font-size: 20px; padding: 0 5px; }
+    .selected-filters { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+    .filter-tag { background: #e8f5e9; color: #2e7d32; padding: 3px 8px; border-radius: 12px; font-size: 11px; display: flex; align-items: center; gap: 4px; }
+    body.dark-mode .filter-tag { background: #1b3d1b; color: #81c784; }
+    .filter-tag-remove { cursor: pointer; font-weight: bold; margin-left: 2px; }
+    .filter-tag-remove:hover { color: #c62828; }
+    .text-inputs-container { display: flex; flex-direction: column; gap: 4px; }
+    .help-screen { background: var(--card-bg); border-radius: 12px; padding: 20px; margin-top: 60px; box-shadow: 0 2px 8px var(--shadow); }
+    .help-title { font-size: 24px; font-weight: bold; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .help-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--input-border); }
+    .help-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .help-section-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .help-section-content { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+    .help-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .help-keyword { background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 15px; font-size: 12px; font-weight: 500; }
+    body.dark-mode .help-keyword { background: #1b3d1b; color: #81c784; }
+    .help-intro { background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #1565c0; font-size: 14px; line-height: 1.5; }
+    body.dark-mode .help-intro { background: #0d3d5c; color: #90caf9; }
+    .found-message { text-align: center; padding: 15px; background: #c8e6c9; border-radius: 8px; margin-bottom: 15px; color: #2e7d32; font-weight: 600; font-size: 16px; }
+    body.dark-mode .found-message { background: #2e5a2e; color: #a5d6a7; }
+    .help-note { background: #fff8e1; border-left: 4px solid #ffa000; padding: 10px 14px; border-radius: 0 6px 6px 0; margin-top: 10px; font-size: 13px; color: #6d4c00; line-height: 1.5; }
+    body.dark-mode .help-note { background: #3d2e00; border-left-color: #ffb300; color: #ffe082; }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">🌙</button>
+  <div class="install-prompt" id="installPrompt">
+    <span>📱 Install App</span>
+    <button onclick="installApp()">Install</button>
+    <button class="close-btn" onclick="dismissInstall()">×</button>
+  </div>
+  <div class="container">
+    <div id="uploadScreen" class="upload-screen">
+      <div class="upload-icon">🌿</div>
+      <div class="upload-title">Plant Families of the World ID App</div>
+      <div class="upload-subtitle">(for offline use) made by Goffe Hoving</div>
+      <div style="margin-top: 20px;"></div>
+      <textarea id="csvInput" class="csv-textarea" placeholder="Paste your CSV data here..."></textarea>
+      <button class="load-btn" onclick="loadCSV()">📊 Load Data</button>
+      <button class="save-btn" onclick="saveCSV()">💾 Save to Browser</button>
+      <div class="file-upload-wrapper">
+        <label class="file-upload-label">📁 Upload CSV File<input type="file" class="file-upload-input" accept=".csv,.txt" onchange="handleFileUpload(event)"></label>
+      </div>
+      <p class="tip-text">💡 Your data is stored locally in your browser. Once loaded, the app works offline!</p>
+    </div>
+    <div id="helpScreen" class="help-screen hidden">
+      <button class="back-btn" onclick="showApp()">← Back to Search</button>
+      <div class="help-title">📖 How to Use This App</div>
+      <div class="help-intro">Use the search filters to find plant families by their characteristics. You can either select from the dropdown menu or type your own keywords. Results only appear when you enter search criteria.</div>
+      <div class="help-section">
+        <div class="help-section-title">🌱 Growth Form</div>
+        <div class="help-section-content">Search by the plant's physical growth habit or structure.
+          <div class="help-keywords">
+            <span class="help-keyword">tree</span><span class="help-keyword">shrub</span><span class="help-keyword">herb</span><span class="help-keyword">liana</span><span class="help-keyword">climb</span><span class="help-keyword">epiphyt</span><span class="help-keyword">succulent</span><span class="help-keyword">aquatic</span><span class="help-keyword">thorns</span><span class="help-keyword">spines</span><span class="help-keyword">stipules</span><span class="help-keyword">creeping</span><span class="help-keyword">rheophytic</span><span class="help-keyword">geophytic</span><span class="help-keyword">tendril</span><span class="help-keyword">cushion</span><span class="help-keyword">vine</span><span class="help-keyword">deciduous</span><span class="help-keyword">lenticels</span><span class="help-keyword">peely bark</span><span class="help-keyword">xeric</span><span class="help-keyword">parasite</span><span class="help-keyword">saprophyte</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">🍃 Leaf Characteristics</div>
+        <div class="help-section-content">Search by leaf structure, arrangement, or special features.
+          <div class="help-keywords">
+            <span class="help-keyword">simple</span><span class="help-keyword">compound</span><span class="help-keyword">entire</span><span class="help-keyword">serrate</span><span class="help-keyword">lobed</span><span class="help-keyword">opposite</span><span class="help-keyword">alternate</span><span class="help-keyword">whorled</span><span class="help-keyword">pinnate</span><span class="help-keyword">palmate</span><span class="help-keyword">trifoliate</span><span class="help-keyword">hair</span><span class="help-keyword">gland</span><span class="help-keyword">dot</span><span class="help-keyword">cystoliths</span><span class="help-keyword">swollen</span><span class="help-keyword">basal</span><span class="help-keyword">anisophyllous</span><span class="help-keyword">parallel</span><span class="help-keyword">scalariform</span><span class="help-keyword">toothed</span><span class="help-keyword">spiky</span><span class="help-keyword">assymetrical</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">🌸 Flower Characteristics</div>
+        <div class="help-section-content">Search by flower structure, symmetry, colour, or number of parts.
+          <div class="help-note">
+            ℹ️ <strong>Numbers (e.g. 4, 5, 6)</strong> represent the count of <strong>petals, sepals, tepals, or merosity</strong> — for example, searching <strong>5</strong> finds 5-merous flowers. Other floral features that involve a count — such as a lobed style or number of stigmas — are written out in words in the data (e.g. <em>three lobed style</em>, <em>two stigmas</em>). Search for those using written-out words, not digits.
+          </div>
+          <div class="help-keywords" style="margin-top: 10px;">
+            <span class="help-keyword">1</span><span class="help-keyword">2</span><span class="help-keyword">3</span><span class="help-keyword">4</span><span class="help-keyword">5</span><span class="help-keyword">6</span><span class="help-keyword">7</span><span class="help-keyword">8</span><span class="help-keyword">9</span><span class="help-keyword">10</span><span class="help-keyword">11</span><span class="help-keyword">12</span><span class="help-keyword">13</span><span class="help-keyword">14</span><span class="help-keyword">15</span><span class="help-keyword">16</span><span class="help-keyword">17</span><span class="help-keyword">18</span><span class="help-keyword">19</span><span class="help-keyword">20</span><span class="help-keyword">merous</span><span class="help-keyword">tubular</span><span class="help-keyword">fused</span><span class="help-keyword">free</span><span class="help-keyword">lobed</span><span class="help-keyword">white</span><span class="help-keyword">yellow</span><span class="help-keyword">red</span><span class="help-keyword">pink</span><span class="help-keyword">purple</span><span class="help-keyword">blue</span><span class="help-keyword">orange</span><span class="help-keyword">green</span><span class="help-keyword">small</span><span class="help-keyword">showy</span><span class="help-keyword">nectar disk</span><span class="help-keyword">raceme</span><span class="help-keyword">spike</span><span class="help-keyword">spath</span><span class="help-keyword">three lobed style</span><span class="help-keyword">two stigmas</span><span class="help-keyword">four lobed</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">🌼 Stamen Characteristics</div>
+        <div class="help-section-content">Search by the number of stamens. Type a number to find families with that stamen count.
+          <div class="help-note">
+            ⚠️ <strong>Important:</strong> Always end your stamen number with a comma when typing — for example <strong>5,</strong> instead of just <strong>5</strong>. This prevents false matches (e.g. searching <em>5</em> would also match <em>15</em> or <em>50</em>). The comma marks the end of the number as it appears in the data.
+          </div>
+          <div class="help-keywords" style="margin-top: 10px;">
+            <span class="help-keyword">1,</span><span class="help-keyword">2,</span><span class="help-keyword">3,</span><span class="help-keyword">4,</span><span class="help-keyword">5,</span><span class="help-keyword">6,</span><span class="help-keyword">7,</span><span class="help-keyword">8,</span><span class="help-keyword">9,</span><span class="help-keyword">10,</span><span class="help-keyword">11,</span><span class="help-keyword">12,</span><span class="help-keyword">13,</span><span class="help-keyword">14,</span><span class="help-keyword">15,</span><span class="help-keyword">16,</span><span class="help-keyword">17,</span><span class="help-keyword">18,</span><span class="help-keyword">19,</span><span class="help-keyword">20,</span><span class="help-keyword">21,</span><span class="help-keyword">22,</span><span class="help-keyword">23,</span><span class="help-keyword">24,</span><span class="help-keyword">25,</span><span class="help-keyword">26,</span><span class="help-keyword">27,</span><span class="help-keyword">28,</span><span class="help-keyword">29,</span><span class="help-keyword">30,</span><span class="help-keyword">many</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">🍎 Fruit Characteristics</div>
+        <div class="help-section-content">Search by fruit type or structure. This column also includes carpel counts and seed counts, both written out as words.
+          <div class="help-note">
+            ℹ️ <strong>Carpels &amp; seeds:</strong> Counts in the fruit column are written out in words, not digits — for example <em>three carpels</em>, <em>five seeds</em>, <em>two locules</em>. Search using written-out words rather than numbers. You can combine a count with a fruit type (e.g. <strong>three carpels</strong> + <strong>drupe</strong>) using multiple filter boxes.
+          </div>
+          <div class="help-keywords" style="margin-top: 10px;">
+            <span class="help-keyword">drupe</span><span class="help-keyword">berry</span><span class="help-keyword">capsule</span><span class="help-keyword">pod</span><span class="help-keyword">nut</span><span class="help-keyword">achene</span><span class="help-keyword">samara</span><span class="help-keyword">follicle</span><span class="help-keyword">silique</span><span class="help-keyword">superior</span><span class="help-keyword">inferior</span><span class="help-keyword">lobed</span><span class="help-keyword">rigid</span><span class="help-keyword">blue</span><span class="help-keyword">carpels</span><span class="help-keyword">styles</span><span class="help-keyword">stigma</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">🌍 Distribution</div>
+        <div class="help-section-content">Search by geographic region, climate zone, or country name. You can enter any country in the world — results will show families that are <strong>native</strong> to that country.
+          <div class="help-note">
+            ℹ️ <strong>Native only:</strong> Distribution data reflects where a family occurs <em>natively</em>. Introduced or cultivated occurrences are not included. For example, searching <strong>Netherlands</strong> will only return families naturally native to the Netherlands, not those that have been introduced there.
+          </div>
+          <div class="help-keywords" style="margin-top: 10px;">
+            <span class="help-keyword">tropical</span><span class="help-keyword">temperate</span><span class="help-keyword">cosmopolitan</span><span class="help-keyword">pantropical</span><span class="help-keyword">Africa</span><span class="help-keyword">Asia</span><span class="help-keyword">America</span><span class="help-keyword">Australia</span><span class="help-keyword">Mediterranean</span><span class="help-keyword">mountains</span><span class="help-keyword">arid</span><span class="help-keyword">endemic</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">🐝 Reproductive Strategy</div>
+        <div class="help-section-content">Search by pollination method or reproductive features.
+          <div class="help-keywords">
+            <span class="help-keyword">insect pollinated</span><span class="help-keyword">wind pollinated</span><span class="help-keyword">bird pollinated</span><span class="help-keyword">bat pollinated</span><span class="help-keyword">self-pollinating</span><span class="help-keyword">dioecious</span><span class="help-keyword">monoecious</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">💨 Dispersal Type</div>
+        <div class="help-section-content">Search by how seeds or fruits are dispersed.
+          <div class="help-keywords">
+            <span class="help-keyword">wind</span><span class="help-keyword">animal</span><span class="help-keyword">bird</span><span class="help-keyword">water</span><span class="help-keyword">explosive</span><span class="help-keyword">gravity</span><span class="help-keyword">ant</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">🏷️ Uses / Other Info</div>
+        <div class="help-section-content">Search by economic uses or other notable features.
+          <div class="help-keywords">
+            <span class="help-keyword">edible</span><span class="help-keyword">medicinal</span><span class="help-keyword">timber</span><span class="help-keyword">ornamental</span><span class="help-keyword">toxic</span><span class="help-keyword">fiber</span><span class="help-keyword">oil</span><span class="help-keyword">dye</span><span class="help-keyword">spice</span>
+          </div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-section-title">💡 Tips</div>
+        <div class="help-section-content">
+          <ul style="margin-left: 20px; margin-top: 10px;">
+            <li>Use the <strong>dropdown menu</strong> to see all available options from your data</li>
+            <li>Use the <strong>text box</strong> to type custom keywords</li>
+            <li>Click the <strong>+ button</strong> to add more search boxes (up to 5 per field)</li>
+            <li>All filters work together — results must match ALL criteria</li>
+            <li>Click on a family card to see more details</li>
+            <li>Use <strong>Clear All</strong> to reset all filters</li>
+            <li>Use <strong>Show All Families</strong> to browse the complete list</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div id="appScreen" class="hidden">
+      <h1>Plant Families of the World ID App</h1>
+      <p class="app-subtitle">(for offline use) made by Goffe Hoving</p>
+      <div class="top-buttons">
+        <button class="reload-btn" onclick="showUpload()">📂 Load Different Data</button>
+        <button class="help-btn" onclick="showHelp()">📖 How to Use</button>
+        <button class="show-all-btn" onclick="showAllFamilies()">👁️ Show All Families</button>
+      </div>
+      <div class="search-panel">
+        <div class="search-header">
+          <div class="search-header-left">
+            <span class="search-title">🔍 Search & Filter (<span id="activeCount">0</span> active)</span>
+            <span class="search-status" id="searchStatus">Choose out of <span id="totalCount">0</span> families</span>
+          </div>
+          <button class="clear-btn" id="clearBtn" style="display:none" onclick="clearAll()">Clear All</button>
+        </div>
+        <div class="search-grid">
+          <div class="search-box"><label class="search-label">FAMILY NAME</label><div class="search-input-wrapper"><input type="text" id="family" class="search-input" placeholder="e.g. Fabaceae, Rosaceae, Poaceae" oninput="filterFamilies()"></div></div>
+          <div class="search-box"><label class="search-label">COMMON GENERA</label><div class="search-input-wrapper"><input type="text" id="genera" class="search-input" placeholder="e.g. Acacia, Rosa, Ficus" oninput="filterFamilies()"></div></div>
+          <div class="search-box"><label class="search-label">GROWTH FORM <button class="add-search-btn" onclick="addTextInput('growth')">+</button></label><div class="text-inputs-container" id="growthInputs"><select class="search-select" onchange="filterFamilies()" data-field="growth"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. tree, shrub, liana" oninput="filterFamilies()" data-field-text="growth"></div></div><div class="selected-filters" id="growthTags"></div></div>
+          <div class="search-box"><label class="search-label">LEAF CHARACTERISTICS <button class="add-search-btn" onclick="addTextInput('leaf')">+</button></label><div class="text-inputs-container" id="leafInputs"><select class="search-select" onchange="filterFamilies()" data-field="leaf"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. opposite, pinnate, serrate" oninput="filterFamilies()" data-field-text="leaf"></div></div><div class="selected-filters" id="leafTags"></div></div>
+          <div class="search-box"><label class="search-label">FLOWER CHARACTERISTICS <button class="add-search-btn" onclick="addTextInput('flower')">+</button></label><div class="text-inputs-container" id="flowerInputs"><select class="search-select" onchange="filterFamilies()" data-field="flower"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. 5, white, three lobed style" oninput="filterFamilies()" data-field-text="flower"></div></div><div class="selected-filters" id="flowerTags"></div></div>
+          <div class="search-box"><label class="search-label">STAMEN CHARACTERISTICS <button class="add-search-btn" onclick="addTextInput('stamen')">+</button></label><div class="text-inputs-container" id="stamenInputs"><select class="search-select" onchange="filterFamilies()" data-field="stamen"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. 5, (use comma!), 10, many" oninput="filterFamilies()" data-field-text="stamen"></div></div><div class="selected-filters" id="stamenTags"></div></div>
+          <div class="search-box"><label class="search-label">FRUIT CHARACTERISTICS <button class="add-search-btn" onclick="addTextInput('fruit')">+</button></label><div class="text-inputs-container" id="fruitInputs"><select class="search-select" onchange="filterFamilies()" data-field="fruit"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. drupe, three carpels, five seeds" oninput="filterFamilies()" data-field-text="fruit"></div></div><div class="selected-filters" id="fruitTags"></div></div>
+          <div class="search-box"><label class="search-label">DISTRIBUTION <button class="add-search-btn" onclick="addTextInput('distribution')">+</button></label><div class="text-inputs-container" id="distributionInputs"><select class="search-select" onchange="filterFamilies()" data-field="distribution"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. Brazil, tropical, Africa (native only)" oninput="filterFamilies()" data-field-text="distribution"></div></div><div class="selected-filters" id="distributionTags"></div></div>
+          <div class="search-box"><label class="search-label">REPRODUCTIVE STRATEGY <button class="add-search-btn" onclick="addTextInput('reproductive')">+</button></label><div class="text-inputs-container" id="reproductiveInputs"><select class="search-select" onchange="filterFamilies()" data-field="reproductive"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. insect pollinated, dioecious, wind" oninput="filterFamilies()" data-field-text="reproductive"></div></div><div class="selected-filters" id="reproductiveTags"></div></div>
+          <div class="search-box"><label class="search-label">DISPERSAL TYPE <button class="add-search-btn" onclick="addTextInput('dispersal')">+</button></label><div class="text-inputs-container" id="dispersalInputs"><select class="search-select" onchange="filterFamilies()" data-field="dispersal"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. wind, bird, explosive" oninput="filterFamilies()" data-field-text="dispersal"></div></div><div class="selected-filters" id="dispersalTags"></div></div>
+          <div class="search-box"><label class="search-label">USES/INFO <button class="add-search-btn" onclick="addTextInput('uses')">+</button></label><div class="text-inputs-container" id="usesInputs"><select class="search-select" onchange="filterFamilies()" data-field="uses"><option value="">-- Select from list --</option></select><div class="search-input-wrapper"><input type="text" class="search-input" placeholder="e.g. edible, medicinal, timber" oninput="filterFamilies()" data-field-text="uses"></div></div><div class="selected-filters" id="usesTags"></div></div>
+        </div>
+      </div>
+      <div id="foundMessage" class="found-message hidden">You found the family/group!</div>
+      <div id="activeFilters" class="active-filters" style="display:none">🎯 <span id="activeFiltersCount">0</span> filters active — <span id="filteredCount">0</span> choices out of <span id="totalCount2">0</span> families/groups</div>
+      <div id="startSearching" class="start-searching"><div class="start-icon">🔍</div><p>Start typing or select filters to find plant families</p><p style="margin-top:10px; font-size: 13px;">Or click "Show All Families" to browse through <span id="totalCount3">0</span> families/groups</p></div>
+      <div id="noResults" class="no-results" style="display:none"><div class="no-results-icon">🔍</div><p>No plant families match your search criteria</p><p style="margin-top:10px">Try adjusting your filters</p></div>
+      <div id="cardsContainer" class="cards-grid"></div>
+      <p id="familyCount" style="display:none">0</p>
+    </div>
+  </div>
+  <script>
+    let families = [];
+    let expandedCard = null;
+    let fieldOptions = {};
+    let showingAll = false;
+    const searchCounts = { growth: 1, leaf: 1, flower: 1, stamen: 1, fruit: 1, distribution: 1, reproductive: 1, dispersal: 1, uses: 1 };
+    const fieldMap = { growth: 'Growth Form', leaf: 'Leaf Characteristics', flower: 'Flower Characteristics', stamen: 'Stamen Characteristics', fruit: 'Fruit Characteristics', distribution: 'Distribution', reproductive: 'Reproductive Strategy', dispersal: 'Common Dispersal Type', uses: 'Uses/other info' };
+    if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('service-worker.js').catch(err => {}); }); }
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; document.getElementById('installPrompt').style.display = 'flex'; });
+    function installApp() { if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; document.getElementById('installPrompt').style.display = 'none'; }); } }
+    function dismissInstall() { document.getElementById('installPrompt').style.display = 'none'; }
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); const isDark = document.body.classList.contains('dark-mode'); document.getElementById('themeBtn').textContent = isDark ? '☀️' : '🌙'; localStorage.setItem('darkMode', isDark); }
+    if (localStorage.getItem('darkMode') === 'true') { document.body.classList.add('dark-mode'); document.getElementById('themeBtn').textContent = '☀️'; }
+    function showHelp() { document.getElementById('appScreen').classList.add('hidden'); document.getElementById('helpScreen').classList.remove('hidden'); }
+    function showApp() { document.getElementById('helpScreen').classList.add('hidden'); document.getElementById('appScreen').classList.remove('hidden'); }
+    function showAllFamilies() { showingAll = true; renderCards(families); document.getElementById('startSearching').style.display = 'none'; document.getElementById('activeFilters').style.display = 'block'; document.getElementById('activeFiltersCount').textContent = '0'; document.getElementById('filteredCount').textContent = families.length; document.getElementById('searchStatus').textContent = 'Showing all ' + families.length + ' families/groups'; document.getElementById('searchStatus').classList.remove('found'); document.getElementById('foundMessage').classList.add('hidden'); }
+    function extractCharacteristics(columnName) { const characteristics = new Set(); families.forEach(family => { const value = family[columnName] || ''; value.split(',').forEach(part => { const cleaned = part.trim(); if (cleaned) characteristics.add(cleaned); }); }); return Array.from(characteristics).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); }
+    function buildFieldOptions() { fieldOptions = {}; Object.keys(fieldMap).forEach(field => { fieldOptions[field] = extractCharacteristics(fieldMap[field]); }); }
+    function populateDropdowns() { Object.keys(fieldMap).forEach(field => { const select = document.querySelector('select[data-field="' + field + '"]'); if (select) { const currentValue = select.value; select.innerHTML = '<option value="">-- Select from list --</option>'; fieldOptions[field].forEach(opt => { const option = document.createElement('option'); option.value = opt; option.textContent = opt; select.appendChild(option); }); if (currentValue) select.value = currentValue; } }); }
+    function addTextInput(field) { if (searchCounts[field] >= 5) { alert('Maximum 5 text inputs per field'); return; } const container = document.getElementById(field + 'Inputs'); const wrapper = document.createElement('div'); wrapper.className = 'search-input-wrapper'; wrapper.innerHTML = '<input type="text" class="search-input" placeholder="Type to search..." oninput="filterFamilies()" data-field-text="' + field + '"><button class="remove-search-btn" onclick="removeTextInput(this, \'' + field + '\')">×</button>'; container.appendChild(wrapper); searchCounts[field]++; }
+    function removeTextInput(btn, field) { if (searchCounts[field] <= 1) return; btn.parentElement.remove(); searchCounts[field]--; filterFamilies(); }
+    function handleFileUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const csvText = e.target.result; document.getElementById('csvInput').value = csvText; families = parseCSV(csvText); if (families.length === 0) { alert('No families found'); return; } buildFieldOptions(); populateDropdowns(); document.getElementById('uploadScreen').classList.add('hidden'); document.getElementById('appScreen').classList.remove('hidden'); document.getElementById('familyCount').textContent = families.length; document.getElementById('totalCount').textContent = families.length; document.getElementById('totalCount2').textContent = families.length; document.getElementById('totalCount3').textContent = families.length; filterFamilies(); setTimeout(() => { if (confirm('Data loaded! Save for offline use?')) { try { localStorage.setItem('plantCSV', csvText); alert('✅ Saved!'); } catch (e) {} } }, 500); }; reader.readAsText(file); }
+    function parseCSVLine(line) { const result = []; let current = ''; let inQuotes = false; for (let i = 0; i < line.length; i++) { const char = line[i]; if (char === '"') inQuotes = !inQuotes; else if (char === ',' && !inQuotes) { result.push(current.trim()); current = ''; } else current += char; } result.push(current.trim()); return result; }
+    function parseCSV(csv) { try { csv = csv.replace(/^\uFEFF/, '').trim(); const lines = csv.split(/\r?\n/).filter(line => line.trim()); if (lines.length < 2) return []; const headers = parseCSVLine(lines[0]); const data = []; for (let i = 1; i < lines.length; i++) { try { const values = parseCSVLine(lines[i]); const obj = {}; headers.forEach((header, idx) => { const cleanHeader = header.replace(/^["']|["']$/g, '').trim(); obj[cleanHeader] = values[idx] ? values[idx].replace(/^["']|["']$/g, '').trim() : ''; }); if (obj.Family && obj.Family.trim()) data.push(obj); } catch (e) {} } return data; } catch (error) { return []; } }
+    function loadCSV() { const csvText = document.getElementById('csvInput').value.trim(); if (!csvText) { alert('Please paste CSV!'); return; } families = parseCSV(csvText); if (families.length === 0) { alert('No families found'); return; } buildFieldOptions(); populateDropdowns(); document.getElementById('uploadScreen').classList.add('hidden'); document.getElementById('appScreen').classList.remove('hidden'); document.getElementById('familyCount').textContent = families.length; document.getElementById('totalCount').textContent = families.length; document.getElementById('totalCount2').textContent = families.length; document.getElementById('totalCount3').textContent = families.length; filterFamilies(); }
+    function saveCSV() { const csvText = document.getElementById('csvInput').value.trim(); if (!csvText) { alert('Paste CSV first!'); return; } try { localStorage.setItem('plantCSV', csvText); alert('✅ Saved!'); } catch (e) { alert('Could not save'); } }
+    function showUpload() { document.getElementById('appScreen').classList.add('hidden'); document.getElementById('helpScreen').classList.add('hidden'); document.getElementById('uploadScreen').classList.remove('hidden'); }
+    function getFieldValues(field) { const values = []; const select = document.querySelector('select[data-field="' + field + '"]'); if (select && select.value.trim()) values.push(select.value.trim()); document.querySelectorAll('input[data-field-text="' + field + '"]').forEach(input => { const val = input.value.trim(); if (val) values.push(val); }); return values; }
+    function filterFamilies() { showingAll = false; const familyVal = document.getElementById('family').value.trim().toLowerCase(); const generaVal = document.getElementById('genera').value.trim().toLowerCase(); let activeCount = 0; if (familyVal) activeCount++; if (generaVal) activeCount++; const fields = ['growth', 'leaf', 'flower', 'stamen', 'fruit', 'distribution', 'reproductive', 'dispersal', 'uses']; fields.forEach(field => { activeCount += getFieldValues(field).length; }); if (activeCount === 0) { document.getElementById('startSearching').style.display = 'block'; document.getElementById('noResults').style.display = 'none'; document.getElementById('cardsContainer').style.display = 'none'; document.getElementById('activeFilters').style.display = 'none'; document.getElementById('clearBtn').style.display = 'none'; document.getElementById('activeCount').textContent = 0; document.getElementById('searchStatus').textContent = 'Choose out of ' + families.length + ' families/groups'; document.getElementById('searchStatus').classList.remove('found'); document.getElementById('foundMessage').classList.add('hidden'); return; } document.getElementById('startSearching').style.display = 'none'; const filtered = families.filter(family => { const matchFamily = !familyVal || (family.Family || '').toLowerCase().includes(familyVal); const matchGenera = !generaVal || (family['Common genera'] || '').toLowerCase().includes(generaVal); for (let field of fields) { const vals = getFieldValues(field); if (vals.length > 0) { const text = (family[fieldMap[field]] || '').toLowerCase(); if (!vals.every(v => text.includes(v.toLowerCase()))) return false; } } return matchFamily && matchGenera; }); fields.forEach(field => { const vals = getFieldValues(field); const tagsContainer = document.getElementById(field + 'Tags'); if (tagsContainer) { tagsContainer.innerHTML = vals.map(v => '<span class="filter-tag">' + v + '<span class="filter-tag-remove" onclick="removeFilter(\'' + field + '\', \'' + v.replace(/'/g, "\\'") + '\')">×</span></span>').join(''); } }); document.getElementById('activeCount').textContent = activeCount; document.getElementById('activeFiltersCount').textContent = activeCount; document.getElementById('filteredCount').textContent = filtered.length; document.getElementById('clearBtn').style.display = activeCount > 0 ? 'block' : 'none'; document.getElementById('activeFilters').style.display = activeCount > 0 ? 'block' : 'none'; const statusEl = document.getElementById('searchStatus'); const foundMessageEl = document.getElementById('foundMessage'); if (filtered.length === 1) { statusEl.textContent = 'You found the family/group!'; statusEl.classList.add('found'); foundMessageEl.classList.remove('hidden'); } else if (filtered.length === 0) { statusEl.textContent = 'No matches out of ' + families.length + ' families/groups'; statusEl.classList.remove('found'); foundMessageEl.classList.add('hidden'); } else { statusEl.textContent = filtered.length + ' choices out of ' + families.length + ' families/groups'; statusEl.classList.remove('found'); foundMessageEl.classList.add('hidden'); } renderCards(filtered); }
+    function removeFilter(field, value) { const select = document.querySelector('select[data-field="' + field + '"]'); if (select && select.value === value) select.value = ''; document.querySelectorAll('input[data-field-text="' + field + '"]').forEach(input => { if (input.value.trim() === value) input.value = ''; }); filterFamilies(); }
+    function renderCards(filtered) { const container = document.getElementById('cardsContainer'); const noResults = document.getElementById('noResults'); if (filtered.length === 0) { container.style.display = 'none'; noResults.style.display = 'block'; return; } container.style.display = 'grid'; noResults.style.display = 'none'; container.innerHTML = filtered.map((family, idx) => { const isExpanded = expandedCard === idx; return '<div class="card" onclick="toggleCard(' + idx + ')"><div class="card-header"><div class="card-title"><div class="family-name">' + family.Family + '</div><div class="order-name">' + family.Order + '</div></div><div class="card-badges">' + (family.Group ? '<span class="badge badge-group">' + family.Group + '</span>' : '') + (family['Sp. estimate'] ? '<span class="badge badge-species">~' + family['Sp. estimate'] + ' spp.</span>' : '') + '</div></div><div class="card-content">' + (family['Common genera'] ? '<div class="detail-row"><span class="detail-label">Genera:</span><span class="detail-value">' + family['Common genera'] + '</span></div>' : '') + (family['Growth Form'] ? '<div class="detail-row"><span class="detail-label">Growth:</span><span class="detail-value">' + family['Growth Form'] + '</span></div>' : '') + (isExpanded ? (family['Leaf Characteristics'] ? '<div class="detail-row"><span class="detail-label">Leaves:</span><span class="detail-value">' + family['Leaf Characteristics'] + '</span></div>' : '') + (family['Flower Characteristics'] ? '<div class="detail-row"><span class="detail-label">Flowers:</span><span class="detail-value">' + family['Flower Characteristics'] + '</span></div>' : '') + (family['Stamen Characteristics'] ? '<div class="detail-row"><span class="detail-label">Stamens:</span><span class="detail-value">' + family['Stamen Characteristics'] + '</span></div>' : '') + (family['Fruit Characteristics'] ? '<div class="detail-row"><span class="detail-label">Fruits:</span><span class="detail-value">' + family['Fruit Characteristics'] + '</span></div>' : '') + (family.Distribution ? '<div class="detail-row"><span class="detail-label">Distribution:</span><span class="detail-value">' + family.Distribution + '</span></div>' : '') + (family['Reproductive Strategy'] ? '<div class="detail-row"><span class="detail-label">Reproduction:</span><span class="detail-value">' + family['Reproductive Strategy'] + '</span></div>' : '') + (family['Common Dispersal Type'] ? '<div class="detail-row"><span class="detail-label">Dispersal:</span><span class="detail-value">' + family['Common Dispersal Type'] + '</span></div>' : '') + (family['Two extremes'] ? '<div class="detail-row"><span class="detail-label">Examples:</span><span class="detail-value">' + family['Two extremes'] + '</span></div>' : '') + (family['Uses/other info'] ? '<div class="detail-row"><span class="detail-label">Uses:</span><span class="detail-value">' + family['Uses/other info'] + '</span></div>' : '') : '') + '</div><div class="expand-hint">' + (isExpanded ? '▲ Collapse' : '▼ Details') + '</div></div>'; }).join(''); }
+    function toggleCard(idx) { expandedCard = expandedCard === idx ? null : idx; if (showingAll) renderCards(families); else filterFamilies(); }
+    function clearAll() { document.getElementById('family').value = ''; document.getElementById('genera').value = ''; document.querySelectorAll('.search-select').forEach(select => select.value = ''); document.querySelectorAll('input[data-field-text]').forEach(input => input.value = ''); expandedCard = null; showingAll = false; filterFamilies(); }
+    window.addEventListener('load', function() { try { const savedCSV = localStorage.getItem('plantCSV'); if (savedCSV) { document.getElementById('csvInput').value = savedCSV; if (confirm('Found saved data. Load automatically?')) loadCSV(); } } catch (e) {} });
+  </script>
+</body>
+</html>
