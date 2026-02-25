@@ -1,0 +1,24 @@
+{
+  "name": "Plant Families of the World ID App",
+  "short_name": "Plant Guide",
+  "description": "Identify plant families by their characteristics — works offline",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#e8f5e9",
+  "theme_color": "#1b5e20",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
